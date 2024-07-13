@@ -26,4 +26,4 @@ echo
 #export NETCDF_HAS_INTERFACES=$(nf-config --has-f90)
 
 # Args: platform and whether Cmake should search for NetCDF libraries
-source $MYDIR/build.sh nci OFF
+source $MYDIR/build.sh nci ON
