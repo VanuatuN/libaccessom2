@@ -1,9 +1,9 @@
 [submodule "json-fortran"]
 	path = json-fortran
-	url = https://github.com/jacobwilliams/json-fortran.git
+	url = git@github.com:jacobwilliams/json-fortran.git
 [submodule "datetime-fortran"]
 	path = datetime-fortran
-	url = https://github.com/wavebitscientific/datetime-fortran.git
+	url = git@github.com:wavebitscientific/datetime-fortran.git
 [submodule "oasis3-mct"]
 	path = oasis3-mct
-	url = https://github.com/VanuatuN/oasis3-mct.git
+	url = git@github.com:VanuatuN/oasis3-mct.git
