@@ -2,6 +2,9 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(matm Fortran)
 
+set(MPI_FORTRAN_COMPILER mpifort)
+set(CMAKE_Fortran_COMPILER mpifort)
+
 # set output paths for modules, archives, and executables
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/include)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -16,29 +19,44 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+
 if (MPIFORT_EXE STREQUAL "MPIFORT_EXE-NOTFOUND")
   message("mpifort not found, searching for MPI libraries" )
   find_package(MPI)
 else()
   message("mpifort executable found: " ${MPIFORT_EXE})
   message("Will assume system MPI implementation is sound. Remove mpifort from PATH to automatically configure MPI")
-  if (CMAKE_FC_COMPILER STREQUAL "scorep-mpif90")
-    set(MPI_FORTRAN_COMPILER scorep-mpif90)
-    set(CMAKE_Fortran_COMPILER scorep-mpif90)
-  else()
-    set(MPI_FORTRAN_COMPILER mpifort)
-    set(CMAKE_Fortran_COMPILER mpifort)
-  endif()
+#  if (CMAKE_FC_COMPILER STREQUAL "scorep-mpif90")
+#    set(MPI_FORTRAN_COMPILER scorep-mpif90)
+#    set(CMAKE_Fortran_COMPILER scorep-mpif90)
+#  else()
+#   set(MPI_FORTRAN_COMPILER mpifort)
+#    set(CMAKE_Fortran_COMPILER mpifort)
+#  endif()
 endif()
 
+
+# Set the NETCDF_DIR environment variable or pass it as a CMake variable
+#set(NETCDF_DIR "/leonardo_scratch/large/userexternal/ntilinin/ACCESS-NRI/release/linux-rhel8-x86_64/intel-2021.2.0/netcdf-fortran-4.5.2-g6pudzj3xc5fglqwz2xkxrr27rflwto3")
+#set(NETCDF_LIBRARY "-L/leonardo_scratch/large/userexternal/ntilinin/ACCESS-NRI/release/linux-rhel8-x86_64/intel-2021.2.0/netcdf-fortran-4.5.2-g6pudzj3xc5fglqwz2xkxrr27rflwto3/lib -lnetcdff -lnetcdf -lnetcdf -lm")
+#set(NETCDF_INCLUDE_DIR "/leonardo_scratch/large/userexternal/ntilinin/ACCESS-NRI/release/linux-rhel8-x86_64/intel-2021.2.0/netcdf-fortran-4.5.2-g6pudzj3xc5fglqwz2xkxrr27rflwto3/include")
+include_directories(/leonardo_scratch/large/userexternal/ntilinin/ACCESS-NRI/release/linux-rhel8-x86_64/intel-2021.2.0/netcdf-fortran-4.5.2-g6pudzj3xc5fglqwz2xkxrr27rflwto3/include)
+set(NETCDF_LIBRARIES -L/leonardo_scratch/large/userexternal/ntilinin/ACCESS-NRI/release/linux-rhel8-x86_64/intel-2021.2.0/netcdf-fortran-4.5.2-g6pudzj3xc5fglqwz2xkxrr27rflwto3/lib -lnetcdff -lm)
+
 option(FIND_NETCDF "Use FindNetCDF to generate NetCDF configuration" ON)
-if(${FIND_NETCDF})
-  set (NETCDF_F90 "YES")
-  find_package(NetCDF REQUIRED)
-  include_directories(${NETCDF_F90_INCLUDE_DIRS})
-else()
-  set(NETCDF_LIBRARIES netcdff)
-endif()
+#if(${FIND_NETCDF})
+#  set(NETCDF_F90 "YES")
+#  find_package(NetCDF REQUIRED)
+#  include_directories(${NetCDF_INCLUDE_DIRS})
+#  if(NetCDF_Fortran_FOUND)
+#    include_directories(${NetCDF_Fortran_INCLUDE_DIRS})
+#    set(NETCDF_LIBRARIES ${NetCDF_Fortran_LIBRARIES})
+#  else()
+#    message(FATAL_ERROR "NetCDF Fortran interface not found.")
+#  endif()
+#else()
+#  set(NETCDF_LIBRARIES netcdff)
+#endif()
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -108,22 +126,24 @@ set_property(TARGET mpeu PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/libm
 set_property(TARGET psmile.MPI1 PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/libpsmile.MPI1.a)
 set_property(TARGET scrip PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/libscrip.a)
 
+# Get the current working branch
+execute_process(
+  COMMAND git config --get remote.origin.url
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_URL
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 # Get the latest abbreviated commit hash of the working branch
 execute_process(
   COMMAND git rev-parse HEAD
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_COMMIT_HASH
-  RESULT_VARIABLE STATUS
   OUTPUT_STRIP_TRAILING_WHITESPACE
-  ERROR_QUIET
 )
 
-if(STATUS AND NOT STATUS EQUAL 0)
-  set(GIT_COMMIT_HASH "")
-  message(STATUS "Not in a git repo, GIT_COMMIT_HASH set to '${GIT_COMMIT_HASH}'")
-endif()
-
 add_definitions("-DGIT_COMMIT_HASH='${GIT_COMMIT_HASH}'")
+add_definitions("-DGIT_URL='${GIT_URL}'")
 
 # libutil.a library
 file(GLOB LIB_SOURCES libutil/src/*.F90)
